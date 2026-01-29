@@ -46,6 +46,11 @@ async def run_workflow(
         final_covariates,
     )
 
+    # Fix PyArrow serialization issue: convert array columns to Python lists
+    for col in ["entity_ids", "relationship_ids", "covariate_ids"]:
+        if col in output.columns:
+            output[col] = output[col].apply(lambda x: list(x) if x is not None and hasattr(x, '__iter__') else x)
+
     await write_table_to_storage(output, "text_units", context.output_storage)
 
     logger.info("Workflow completed: create_final_text_units")
